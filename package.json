@@ -1,10 +1,10 @@
 {
   "name": "node-red-contrib-time-validator",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Node-RED node for validating schedules and time ranges.",
   "main": "time-validator.js",
   "author": "Lucas Santos",
-  "license": "MIT",
+  "license": "ISC",
   "keywords": [
     "node-red",
     "node-red-node",
