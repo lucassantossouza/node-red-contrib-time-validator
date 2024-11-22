@@ -83,7 +83,6 @@
       dateBlocks: {
         value: [],
         validate: function (val) {
-          console.log("validate", val);
           return (val || []).length > 0;
         }
       },
@@ -100,8 +99,6 @@
     icon: "icons/call-center.svg",
     oneditprepare: function () {
       const dateBlocksContainer = $("#date-blocks-container");
-
-      console.log("oneditprepare", this.dateBlocks);
 
       // Função para adicionar bloco de data
       const addDateBlock = (blockData = {}) => {
@@ -292,8 +289,6 @@
       let hasErrors = false;
       let messageError = "";
 
-      console.log("oneditsave");
-
       $("#date-blocks-container .date-block").each(function () {
         const blockElement = $(this);
         const type = blockElement.find("input[name^=type-]:checked").val();
@@ -303,21 +298,10 @@
 
         let value;
 
-        console.log({
-          type,
-          isActive,
-          startTime,
-          endTime,
-          blockElement
-        });
-
         if (type === "annual") {
           const day = blockElement.find(".day-input-annual").val();
           const month = blockElement.find(".month-input").val();
-          console.log({
-            day,
-            month
-          });
+          
           if (!day || !month) {
             // RED.notify("Ao selecionar 'Anual', é necessário informar o dia e mês.", "error");
             messageError = "Ao selecionar 'Anual', é necessário informar o dia e mês.";
@@ -375,17 +359,11 @@
         return false;
       }
 
-      console.log({
-        dateBlocks
-      });
-
       this.dateBlocks = dateBlocks;
       this.timezone = $("#node-input-timezone").val();
       this.active = $("#node-input-active").prop("checked") ? "true" : "false";
     },
-    onpaletteadd: function () {
-      console.log("onpaletteadd");
-    }
+    onpaletteadd: function () {}
   });
 </script>
 
