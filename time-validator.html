@@ -14,12 +14,13 @@
   </div>
 
   <div class="form-row" style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center;">
-    <label for="node-input-active" style="width: auto; margin: 0;"><i class="fa fa-toggle-on"></i> Ativar Validação</label>
+    <label for="node-input-active" style="width: auto; margin: 0;"><i class="fa fa-toggle-on"></i> Ativar
+      Validação</label>
     <select id="node-input-active" style="width: auto;">
       <option value="true" selected>Sim</option>
       <option value="false">Não</option>
     </select>
-  <!-- adicionar um seletor de fuso horário com valores padrão -3 são paulo / Brasil -->
+    <!-- adicionar um seletor de fuso horário com valores padrão -3 são paulo / Brasil -->
     <label for="node-input-timezone" style="width: auto; margin: 0;"><i class="fa fa-globe"></i> Fuso Horário</label>
     <select id="node-input-timezone" style="width: auto;">
       <option value="-12">GMT -12:00</option>
@@ -99,7 +100,7 @@
     icon: "icons/call-center.svg",
     oneditprepare: function () {
       const dateBlocksContainer = $("#date-blocks-container");
-      
+
       console.log("oneditprepare", this.dateBlocks);
 
       // Função para adicionar bloco de data
@@ -302,12 +303,21 @@
 
         let value;
 
-        console.log({ type, isActive, startTime, endTime, blockElement });
-        
+        console.log({
+          type,
+          isActive,
+          startTime,
+          endTime,
+          blockElement
+        });
+
         if (type === "annual") {
           const day = blockElement.find(".day-input-annual").val();
           const month = blockElement.find(".month-input").val();
-          console.log({ day, month });
+          console.log({
+            day,
+            month
+          });
           if (!day || !month) {
             // RED.notify("Ao selecionar 'Anual', é necessário informar o dia e mês.", "error");
             messageError = "Ao selecionar 'Anual', é necessário informar o dia e mês.";
@@ -365,7 +375,9 @@
         return false;
       }
 
-      console.log({ dateBlocks });
+      console.log({
+        dateBlocks
+      });
 
       this.dateBlocks = dateBlocks;
       this.timezone = $("#node-input-timezone").val();
@@ -375,6 +387,71 @@
       console.log("onpaletteadd");
     }
   });
+</script>
+
+<script type="text/html" data-help-name="time-validator">
+  <h2>Time Validator</h2>
+  <p>The <strong>Time Validator</strong> is a custom Node-RED node that validates messages based on configurable time
+    periods, such as specific dates, annual occurrences, days of the month, or weekdays. It is designed to provide a
+    powerful and flexible way to route messages depending on time-based conditions.</p>
+
+  <h3>Functionality</h3>
+  <ul>
+    <li><strong>Time-Based Validation</strong>: Validate messages against predefined time ranges and conditions, such as
+      specific dates, annual events, or weekly schedules.</li>
+    <li><strong>Dynamic Configurations</strong>: Supports dynamic configuration of validation rules directly within the
+      node interface.</li>
+    <li><strong>Prioritized Matching</strong>: Handles multiple validation blocks with a priority-based system: Specific
+      → Annual → Day → Week.</li>
+  </ul>
+
+  <h3>Inputs</h3>
+  <ul>
+    <li><code>msg</code>: The message object passed to the node for validation.</li>
+  </ul>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li><code>Output 1</code>: The original message if the validation passes (time and conditions match).</li>
+    <li><code>Output 2</code>: The original message if the validation fails (time and conditions do not match).</li>
+  </ul>
+
+  <h3>Configurations</h3>
+  <ul>
+    <li><strong>Active</strong>: Determines whether the node should validate messages. If disabled, messages are sent to
+      Output 2 by default.</li>
+    <li><strong>Timezone Offset</strong>: Configurable timezone offset (in hours) to account for local time differences.
+    </li>
+    <li><strong>Date Blocks</strong>: Define the validation conditions:
+      <ul>
+        <li><strong>Specific</strong>: Validate against exact dates (e.g., YYYY-MM-DD).</li>
+        <li><strong>Annual</strong>: Validate against recurring annual events (e.g., DD/MM).</li>
+        <li><strong>Day</strong>: Validate against specific days of the month (e.g., DD).</li>
+        <li><strong>Week</strong>: Validate against specific weekdays (e.g., Monday, Tuesday).</li>
+      </ul>
+    </li>
+    <li><strong>Start Time / End Time</strong>: Define the time range for validation (HH:mm format).</li>
+  </ul>
+
+  <h3>How It Works</h3>
+  <ol>
+    <li><strong>Validate Blocks</strong>: The node evaluates each configured date block according to the priority order
+      (Specific → Annual → Day → Week).</li>
+    <li><strong>Match Conditions</strong>: If a block matches the current date and time and is active, the message is
+      routed to Output 1.</li>
+    <li><strong>Fail Conditions</strong>: If no block matches, the message is routed to Output 2.</li>
+  </ol>
+
+  <h3>Example Scenarios</h3>
+  <ul>
+    <li><strong>Office Hours Validation</strong>: Route messages based on office opening hours.</li>
+    <li><strong>Holiday Handling</strong>: Automatically adjust message routing during public holidays.</li>
+    <li><strong>Scheduled Event Monitoring</strong>: Trigger flows during specific recurring events.</li>
+  </ul>
+
+  <h3>Error Handling</h3>
+  <p>Errors such as invalid date formats, time ranges, or incomplete configurations are logged in the Node-RED console.
+    The node ensures robust validation by halting processing for incorrectly configured inputs.</p>
 </script>
 
 <style>
