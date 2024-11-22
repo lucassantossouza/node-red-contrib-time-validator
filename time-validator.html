@@ -1,0 +1,421 @@
+<script type="text/html" data-template-name="time-validator">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Nome</label>
+    <input type="text" id="node-input-name" placeholder="Digite o nome do nó">
+  </div>
+
+  <div class="form-row" style="text-align: center;">
+    <button id="load-holidays-btn" class="v11-add-btn">
+      <i class="fa fa-calendar"></i> Carregar Feriados Nacionais
+    </button>
+    <button id="clear-all-btn" class="v11-remove-btn" style="background-color: #ff4c4c;">
+      <i class="fa fa-trash"></i> Excluir Todas as Datas
+    </button>
+  </div>
+
+  <div class="form-row" style="display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center;">
+    <label for="node-input-active" style="width: auto; margin: 0;"><i class="fa fa-toggle-on"></i> Ativar Validação</label>
+    <select id="node-input-active" style="width: auto;">
+      <option value="true" selected>Sim</option>
+      <option value="false">Não</option>
+    </select>
+  <!-- adicionar um seletor de fuso horário com valores padrão -3 são paulo / Brasil -->
+    <label for="node-input-timezone" style="width: auto; margin: 0;"><i class="fa fa-globe"></i> Fuso Horário</label>
+    <select id="node-input-timezone" style="width: auto;">
+      <option value="-12">GMT -12:00</option>
+      <option value="-11">GMT -11:00</option>
+      <option value="-10">GMT -10:00</option>
+      <option value="-9">GMT -09:00</option>
+      <option value="-8">GMT -08:00</option>
+      <option value="-7">GMT -07:00</option>
+      <option value="-6">GMT -06:00</option>
+      <option value="-5">GMT -05:00</option>
+      <option value="-4">GMT -04:00</option>
+      <option value="-3">GMT -03:00</option>
+      <option value="-2">GMT -02:00</option>
+      <option value="-1">GMT -01:00</option>
+      <option value="0">GMT 00:00</option>
+      <option value="1">GMT +01:00</option>
+      <option value="2">GMT +02:00</option>
+      <option value="3">GMT +03:00</option>
+      <option value="4">GMT +04:00</option>
+      <option value="5">GMT +05:00</option>
+      <option value="6">GMT +06:00</option>
+      <option value="7">GMT +07:00</option>
+      <option value="8">GMT +08:00</option>
+      <option value="9">GMT +09:00</option>
+      <option value="10">GMT +10:00</option>
+      <option value="11">GMT +11:00</option>
+      <option value="12">GMT +12:00</option>
+    </select>
+  </div>
+
+  <div class="form-row">
+    <div class="info-box">
+      <p><strong>Prioridade das Validações:</strong></p>
+      <p>1º - Data Específica → 2º - Anual → 3º - Dia → 4º - Dias da Semana</p>
+    </div>
+  </div>
+
+  <div class="form-row" style="text-align: right;">
+    <button id="add-date-btn" class="v11-add-btn" style="background-color: #33b353;">
+      <i class="fa fa-plus"></i> Adicionar Data
+    </button>
+  </div>
+
+  <div id="date-blocks-container"></div>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType("time-validator", {
+    category: "function",
+    defaults: {
+      name: {
+        value: ""
+      },
+      active: {
+        value: "true"
+      },
+      timezone: {
+        value: "-3"
+      },
+      dateBlocks: {
+        value: [],
+        validate: function (val) {
+          console.log("validate", val);
+          return (val || []).length > 0;
+        }
+      },
+    },
+    color: "#87CEFA",
+    inputs: 1,
+    outputs: 2,
+    paletteLabel: "Time Validator",
+    label: function () {
+      return this.name || "Validador de Horário";
+    },
+    inputLabels: "input",
+    outputLabels: ["true", "false"],
+    icon: "icons/call-center.svg",
+    oneditprepare: function () {
+      const dateBlocksContainer = $("#date-blocks-container");
+      
+      console.log("oneditprepare", this.dateBlocks);
+
+      // Função para adicionar bloco de data
+      const addDateBlock = (blockData = {}) => {
+        const blockId = `block-${Date.now()}`;
+        const {
+          type = "specific", value = "", isActive = "true", startTime = "00:00", endTime = "23:59"
+        } = blockData;
+
+        const blockHTML = `
+          <div class="date-block" id="${blockId}">
+            <div>
+              <label><i class="fa fa-calendar"></i> Tipo de Validação</label>
+            </div>
+            <div style="margin-top: 12px; display: flex; flex-wrap: wrap; justify-content: space-between;">
+              <input 
+                type="radio"
+                name="type-${blockId}"
+                value="specific" ${type === "specific" ? "checked" : ""}
+                style="margin: 0;">
+                  Data Específica
+              <input 
+                type="radio"
+                name="type-${blockId}"
+                value="annual" ${type === "annual" ? "checked" : ""}
+                style="margin: 0;">
+                  Anual
+              <input 
+                type="radio"
+                name="type-${blockId}"
+                value="day" ${type === "day" ? "checked" : ""}
+                style="margin: 0;">
+                  Dia
+              <input 
+                type="radio"
+                name="type-${blockId}"
+                value="week" ${type === "week" ? "checked" : ""}
+                style="margin: 0;">
+                  Dias da Semana
+            </div>
+            <div class="type-config day-config" style="display: ${type === "day" ? "block" : "none"};">
+              <label>Dia</label>
+              <input type="number" class="day-input" value="${type === "day" ? value : ""}" placeholder="Ex.: 15">
+            </div>
+            <div class="type-config week-config" style="display: ${type === "week" ? "block" : "none"};">
+              <label>Dias da Semana</label>
+              <div class="week-checkbox-container">
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="sunday" ${value.includes("sunday") ? "checked" : ""}>
+                    Domingo
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="monday" ${value.includes("monday") ? "checked" : ""}>
+                    Segunda
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="tuesday" ${value.includes("tuesday") ? "checked" : ""}>
+                    Terça
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="wednesday" ${value.includes("wednesday") ? "checked" : ""}>
+                    Quarta
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="thursday" ${value.includes("thursday") ? "checked" : ""}>
+                    Quinta
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="friday" ${value.includes("friday") ? "checked" : ""}>
+                    Sexta
+                  </label>
+                <label style="margin: 0;">
+                  <input
+                    type="checkbox"
+                    value="saturday" ${value.includes("saturday") ? "checked" : ""}>
+                    Sábado
+                  </label>
+              </div>
+            </div>
+            <div class="type-config annual-config" style="display: ${type === "annual" ? "block" : "none"};">
+              <div style="display: flex; margin: 12px auto; flex-wrap: wrap; justify-content: space-between;">
+                <div>
+                  <label>Dia</label>
+                  <input type="number" class="day-input-annual" min="1" max="31" value="${type === "annual" ? value.split("/")[0] : ""}" placeholder="Ex.: 25">
+                </div>
+                <div>
+                  <label>Mês</label>
+                  <input type="number" class="month-input" min="1" max="12" value="${type === "annual" ? value.split("/")[1] : ""}" placeholder="Ex.: 12">
+                </div>
+              </div>
+            </div>
+            <div class="type-config specific-config" style="display: ${type === "specific" ? "block" : "none"};">
+              <label>Data Específica</label>
+              <input
+                type="date"
+                class="specific-input"
+                value="${type === "specific" ? value : ""}"
+                min="${new Date().toISOString().split('T')[0]}"
+                max="${new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString().split('T')[0]}">
+            </div>
+            <div>
+              <label>Ativo?</label>
+              <select class="active-input">
+                <option value="true" ${isActive === "true" ? "selected" : ""}>Sim</option>
+                <option value="false" ${isActive === "false" ? "selected" : ""}>Não</option>
+              </select>
+            </div>
+            <div style="display: flex; justify-content: space-between; flex-wrap: wrap; margin: 12px auto;">
+              <div>
+                <label>Hora Inicial</label>
+                <input type="time" class="start-time-input" value="${startTime}">
+              </div>
+              <div>
+                <label>Hora Final</label>
+                <input type="time" class="end-time-input" value="${endTime}">
+              </div>
+            </div>
+            <div style="text-align: center; margin-top: 12px;">
+              <button class="v11-remove-btn">Remover</button>
+            </div>
+          </div>
+        `;
+
+        dateBlocksContainer.append(blockHTML);
+
+        const blockElement = $(`#${blockId}`);
+        blockElement.find("input[name^=type-]").on("change", function () {
+          blockElement.find(".type-config").hide();
+          blockElement.find(`.${this.value}-config`).show();
+        });
+
+        blockElement.find(".v11-remove-btn").on("click", () => blockElement.remove());
+      };
+
+      // Carregar feriados nacionais
+      $("#load-holidays-btn").on("click", () => {
+        const holidays = [{
+            type: "annual",
+            value: "01/01",
+            isActive: "true",
+            startTime: "00:00",
+            endTime: "23:59"
+          }, // Ano Novo
+          {
+            type: "annual",
+            value: "25/12",
+            isActive: "true",
+            startTime: "00:00",
+            endTime: "23:59"
+          }, // Natal
+          {
+            type: "annual",
+            value: "07/09",
+            isActive: "true",
+            startTime: "00:00",
+            endTime: "23:59"
+          }, // Independência
+        ];
+
+        holidays.forEach(holiday => addDateBlock(holiday));
+      });
+
+      // Adicionar bloco de data manualmente
+      $("#add-date-btn").on("click", () => addDateBlock());
+
+      // Limpar todos os blocos
+      $("#clear-all-btn").on("click", () => dateBlocksContainer.empty());
+
+      // Adicionar os valores salvo no dateBlocks value nos campos novamente para ficarem visiveis
+      this.dateBlocks.forEach(block => addDateBlock(block));
+      // set value of timezone and active to input
+      $("#node-input-timezone").val(this.timezone);
+      $("#node-input-active").prop("checked", this.active === "true");
+    },
+    oneditsave: function () {
+      const dateBlocks = [];
+      let hasErrors = false;
+      let messageError = "";
+
+      console.log("oneditsave");
+
+      $("#date-blocks-container .date-block").each(function () {
+        const blockElement = $(this);
+        const type = blockElement.find("input[name^=type-]:checked").val();
+        const isActive = blockElement.find(".active-input").val();
+        const startTime = blockElement.find(".start-time-input").val();
+        const endTime = blockElement.find(".end-time-input").val();
+
+        let value;
+
+        console.log({ type, isActive, startTime, endTime, blockElement });
+        
+        if (type === "annual") {
+          const day = blockElement.find(".day-input-annual").val();
+          const month = blockElement.find(".month-input").val();
+          console.log({ day, month });
+          if (!day || !month) {
+            // RED.notify("Ao selecionar 'Anual', é necessário informar o dia e mês.", "error");
+            messageError = "Ao selecionar 'Anual', é necessário informar o dia e mês.";
+            hasErrors = true;
+          }
+          value = `${day}/${month}`;
+        } else if (type === "specific") {
+          value = blockElement.find(".specific-input").val();
+          if (!value) {
+            // RED.notify("Ao selecionar 'Data Específica', é necessário preencher o campo de data.", "error");
+            messageError = "Ao selecionar 'Data Específica', é necessário preencher o campo de data.";
+            hasErrors = true;
+          }
+        } else if (type === "day") {
+          value = blockElement.find(".day-input").val();
+          if (!value) {
+            // RED.notify("Ao selecionar 'Dia', é necessário informar o dia do mês.", "error");
+            messageError = "Ao selecionar 'Dia', é necessário informar o dia do mês.";
+            hasErrors = true;
+          }
+        } else if (type === "week") {
+          value = [];
+          blockElement.find(".week-checkbox-container input:checked").each(function () {
+            value.push($(this).val());
+          });
+          if (value.length === 0) {
+            // RED.notify("Ao selecionar 'Dias da Semana', é necessário selecionar ao menos um dia.", "error");
+            messageError = "Ao selecionar 'Dias da Semana', é necessário selecionar ao menos um dia.";
+            hasErrors = true;
+          }
+        }
+
+        // Validar horários
+        if (startTime && endTime) {
+          const start = new Date(`01/01/2000 ${startTime}`);
+          const end = new Date(`01/01/2000 ${endTime}`);
+          if (start >= end) {
+            RED.notify("A hora inicial deve ser menor que a hora final.", "error");
+            hasErrors = true;
+            return false;
+          }
+        }
+
+        dateBlocks.push({
+          type,
+          value,
+          isActive,
+          startTime,
+          endTime
+        });
+      });
+
+      if (hasErrors) {
+        RED.notify(messageError, "error");
+        return false;
+      }
+
+      console.log({ dateBlocks });
+
+      this.dateBlocks = dateBlocks;
+      this.timezone = $("#node-input-timezone").val();
+      this.active = $("#node-input-active").prop("checked") ? "true" : "false";
+    },
+    onpaletteadd: function () {
+      console.log("onpaletteadd");
+    }
+  });
+</script>
+
+<style>
+  .week-checkbox-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .week-checkbox-container label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .form-row {
+    margin-bottom: 12px;
+  }
+
+  .v11-add-btn,
+  .v11-remove-btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .v11-add-btn {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .v11-remove-btn {
+    background-color: #ff4c4c;
+    color: white;
+  }
+
+  .date-block {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+  }
+</style>
