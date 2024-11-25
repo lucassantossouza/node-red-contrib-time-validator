@@ -182,7 +182,7 @@ module.exports = function (RED) {
         value: validBlock ? validBlock.value : null,
         startTime: validBlock ? validBlock.startTime : null,
         endTime: validBlock ? validBlock.endTime : null,
-        isActive: validBlock ? validBlock.isActive : null,
+        isActive: validBlock ? validBlock.isActive == "true" : null,
         blockType: validBlock ? validBlock.type : null, // Tipo do bloco (specific, annual, day, week)
         checkedAt: dateNow.toISOString(), // Registro da data/hora da validação
       };

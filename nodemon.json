@@ -1,0 +1,6 @@
+{
+  "watch": ["."],
+  "ext": "js,html,json",
+  "exec": "node-red",
+  "delay": "500"
+}
