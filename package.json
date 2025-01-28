@@ -2,7 +2,7 @@
   "name": "node-red-contrib-time-validator",
   "version": "0.0.5",
   "description": "A Node-RED node for validating schedules and time ranges.",
-  "main": "time-validator.js",
+  "main": "src/nodes/time-validator.js",
   "author": "Lucas Santos",
   "license": "ISC",
   "keywords": [
@@ -24,7 +24,7 @@
   "node-red": {
     "version": ">=2.0.0",
     "nodes": {
-      "time-validator": "time-validator.js"
+      "time-validator": "src/nodes/time-validator.js"
     }
   },
   "dependencies": {},
